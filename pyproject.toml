@@ -17,6 +17,7 @@ dependencies = [
     "fugashi",
     "langdetect",
     "ToJyutping",
+    "Flask",
 ]
 
 requires-python = ">=3.8,!=3.9.7"

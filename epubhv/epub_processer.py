@@ -216,8 +216,9 @@ class Epub_Processer:
         #     book_name: str = f"{self.book_name}-h-{lang}.epub"
         # else:
         #     book_name: str = f"{self.book_name}-{lang}.epub"
-        book_name: str = f"{dest}/{self.book_name}_output.epub"
-        shutil.make_archive(base_name=book_name, format="zip", root_dir=self.book_path)
-        os.rename(src=book_name + ".zip", dst=book_name)
+        output_name = f"{self.book_name}_output.epub"
+        out_dest: str = f"{dest}/{self.book_name}_output.epub"
+        shutil.make_archive(base_name=out_dest, format="zip", root_dir=self.book_path)
+        os.rename(src=out_dest + ".zip", dst=out_dest)
         shutil.rmtree(self.book_path)
-        return book_name
+        return output_name

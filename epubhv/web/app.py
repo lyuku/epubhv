@@ -34,8 +34,12 @@ def file_download():
     data = request.args
     if 'filename' in data:
         filename = data.get('filename')
-        grandparent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-        return send_file(grandparent_dir + os.path.sep + filename, as_attachment=True)
+
+        output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'tmp'))
+        # limits file in output dir
+        files = os.listdir(output_dir)
+        if filename in files:
+            return send_file(output_dir + os.path.sep + filename, as_attachment=True)
     else:
         return 'error'
         
@@ -45,12 +49,10 @@ def file_download():
 def epubhv():
     print("process start")
     data = request.form
-    print(data)
     file = request.files['file']
-    print(file.filename)
     need_ruby = False
     actions = []
-
+    # TODO check params and multi thread support and error handle
     # need control process order
     if 'direction' in data:
         if "toVertical" == data['direction']:
@@ -71,7 +73,6 @@ def epubhv():
     processer : Epub_Processer = Epub_Processer(Path(path), to_lang, need_ruby = need_ruby)
     processer.process(actions)
     out_path = processer.pack()
-    print("process finished")
 
     return {
         "downloadPath": out_path

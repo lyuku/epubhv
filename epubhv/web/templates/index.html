@@ -28,6 +28,7 @@
           "tw2t": "Traditional Chinese (OpenCC Standard) to Traditional Chinese (Taiwan standard)",
       }
       $(document).ready(function(){
+        var drop_file = undefined
         for (var key in Languages) {
           $("#epub_languages").append($("<option value="+ key+">"+ Languages[key] +"</option>"))
         }
@@ -35,6 +36,23 @@
         function emptyToUndefined(value) {
           return value === '' ? undefined : value;
         }
+        var dropArea = $("#epub_file_label")
+        dropArea.on('dragover', function (e) {
+            e.preventDefault();
+        });
+
+        dropArea.on('dragleave', function (e) {
+            e.preventDefault();
+        });
+        $("#epub_file_label").on("drop", function(e) {
+          e.preventDefault();
+          var file = e.originalEvent.dataTransfer.files[0];
+          drop_file = file
+          $("#epub_file_label").hide()
+          var newElement = $("<p>You've selected file: " + file.name + "</p>");
+          $("#epub_file_selected").html(newElement)
+          $("#epub_file_selected").show()
+        });
 
         $("#epubForm").on("submit", function(event) {
           event.preventDefault();
@@ -45,6 +63,11 @@
           var direction = emptyToUndefined($("#epub_direction").val())
           var file = $("#epub_file").val()
           var formData = new FormData($(this)[0])
+          if (!file) {
+            file = drop_file
+            formData.set('file', drop_file)
+          }
+
           if (lang) {
             formData.set('convertTo',lang)
           }
@@ -54,7 +77,6 @@
           if (direction) {
             formData.set('direction',direction)
           }
-          console.log(formData)
           if (file && (lang || ruby || direction)) {
             $.ajax({
               url:'/epub_process',
@@ -90,7 +112,7 @@
           if ($(this).val()) {
             var fileName = $(this).val().split('\\').pop();
             $("#epub_file_label").hide()
-            var newElement = $("<p>You've selected file: "+fileName+"</p>");
+            var newElement = $("<p>You've selected file: " + fileName + "</p>");
             $("#epub_file_selected").html(newElement)
             $("#epub_file_selected").show()
           } else {
@@ -155,7 +177,7 @@
           File
         </label>
         <div id="epub_file_label" class="flex items-center justify-center w-full px-3">
-          <label for="epub_file" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+          <label id="drop_zone" for="epub_file" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
               <div class="flex flex-col items-center justify-center pt-5 pb-6">
                   <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
                       <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>

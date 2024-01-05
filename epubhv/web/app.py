@@ -60,7 +60,7 @@ def epubhv():
         if "toHorizontal" == data['direction']:
             actions.append(TO_HORIZONTAL_CONVERTER)
     if 'ruby' in data:
-        if True == data['ruby']:
+        if 'true' == data['ruby']:
             need_ruby = True
             actions.append(RUBY_CONVERTER)
     to_lang = None

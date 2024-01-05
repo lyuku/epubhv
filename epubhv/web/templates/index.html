@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Basic HTML/Tailwind starter</title>
+    <meta name="description" content="Basic HTML/Tailwind starter" />
+    <meta name="author" content="Daily Dev Tips" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+      var Languages = {
+          "": "None",
+          "auto": "Auto",
+          "s2t": "Simplified Chinese to Traditional Chinese",
+          "t2s": "Traditional Chinese to Simplified Chinese",
+          "s2tw": "Simplified Chinese to Traditional Chinese (Taiwan Standard)",
+          "tw2s": "Traditional Chinese (Taiwan Standard) to Simplified Chinese",
+          "s2hk": "Simplified Chinese to Traditional Chinese (Hong Kong variant)",
+          "hk2s": "Traditional Chinese (Hong Kong variant) to Simplified Chinese",
+          "s2twp": "Simplified Chinese to Traditional Chinese (Taiwan variant)",
+          "tw2sp": "Traditional Chinese (Taiwan variant) to Simplified Chinese",
+          "t2tw": "Traditional Chinese (OpenCC Standard) to Taiwan Standard",
+          "hk2t": "Traditional Chinese (Hong Kong variant) to Traditional Chinese",
+          "t2hk": "Traditional Chinese (OpenCC Standard) to Hong Kong variant",
+          "t2jp": "Traditional Chinese Characters (Kyūjitai) to New Japanese Kanji",
+          "jp2t": "New Japanese Kanji to Traditional Chinese Characters (Kyūjitai)",
+          "tw2t": "Traditional Chinese (OpenCC Standard) to Traditional Chinese (Taiwan standard)",
+      }
+      $(document).ready(function(){
+        for (var key in Languages) {
+          $("#epub_languages").append($("<option value="+ key+">"+ Languages[key] +"</option>"))
+        }
+        
+        function emptyToUndefined(value) {
+          return value === '' ? undefined : value;
+        }
+
+        $("#epubForm").on("submit", function(event) {
+          event.preventDefault();
+         
+          // var file_path = $("#epub_file").val()
+          var lang = emptyToUndefined($("#epub_languages").val())
+          var ruby = $("#epub_ruby").prop("checked");
+          var direction = emptyToUndefined($("#epub_direction").val())
+          var file = $("#epub_file").val()
+          var formData = new FormData($(this)[0])
+          if (lang) {
+            formData.set('convertTo',lang)
+          }
+          if (ruby) {
+            formData.set('ruby', ruby)
+          }
+          if (direction) {
+            formData.set('direction',direction)
+          }
+          console.log(formData)
+          if (file && (lang || ruby || direction)) {
+            $.ajax({
+              url:'/epub_process',
+              type:'POST',
+              data: formData,
+              processData: false,
+              contentType: false,
+              cache: false,
+            }).done(function (data) {
+              var link = document.createElement('a');
+              link.href = "/file_download?filename=" + data.downloadPath;
+              link.download = data.downloadPath.split('/')[1];
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              $("#epubForm")[0].reset();
+              $("#epub_file_label").show()
+              $("#epub_file_selected").hide()
+              var fileInputClone = $("#epub_file").clone();
+              $("#epub_file").replaceWith(fileInputClone);
+              fileInputClone.change(changeListener)
+              alert("convert success!")
+            }).fail(function(e) {
+              console.error(e)
+            });
+          } else {
+            console.log("forbidden")
+          }
+          
+        });
+        var changeListener = function() {
+          if ($(this).val()) {
+            var fileName = $(this).val().split('\\').pop();
+            $("#epub_file_label").hide()
+            var newElement = $("<p>You've selected file: "+fileName+"</p>");
+            $("#epub_file_selected").html(newElement)
+            $("#epub_file_selected").show()
+          } else {
+            $("#epub_file_label").show()
+            $("#epub_file_selected").hide()
+          }
+        }
+        $("#epub_file").change(changeListener)
+        $("#epub_file_selected").click(function() {
+          $("#epub_file_label").show()
+          $("#epub_file_selected").hide()
+          var fileInputClone = $("#epub_file").clone();
+          $("#epub_file").replaceWith(fileInputClone);
+          fileInputClone.change(changeListener)
+        })
+
+      });
+    </script>
+  </head>
+  <body class="flex items-start justify-center h-screen">
+    <form class="w-full max-w-lg pt-24" id="epubForm" enctype="multipart/form-data">
+      
+      <div class="flex flex-wrap -mx-3 mb-6">
+        <div class="w-full px-3">
+          <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="grid-password">
+            Direction
+          </label>
+          <select class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="epub_direction" name="epub_direction">
+            <option value="">None</option>
+            <option value="toHorizontal">Horizontal</option>
+            <option value="toVertical">Vertical</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap -mx-3 mb-6">
+        <div class="w-full px-3">
+          <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="epub_languages">
+            Language
+          </label>
+          <select class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="epub_languages" name="epub_languages">
+          </select>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap -mx-3 mb-6">
+        <div class="w-full px-3">
+          <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="grid_ruby">
+            Ruby
+          </label>
+          <div class="flex items-center ps-4 text-gray-700 bg-gray-200 rounded dark:border-gray-700" id="grid_ruby">
+            <input id="epub_ruby" type="checkbox" name="epub_ruby" name="bordered-checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            <label for="epub_ruby" class="w-full py-4 ms-2 text-gray-700" id="epub_ruby_label">Need Ruby</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex flex-wrap -mx-3 mb-6">
+        <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2 px-3" for="grid-file">
+          File
+        </label>
+        <div id="epub_file_label" class="flex items-center justify-center w-full px-3">
+          <label for="epub_file" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+              <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                  <svg class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                  </svg>
+                  <p class="mb-2 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">.epub (MAX. 5M)</p>
+              </div>
+              <input id="epub_file" name="file" type="file" class="hidden" />
+          </label>
+        </div> 
+        <div class="hidden block appearance-none w-full px-3 " id="epub_file_selected">file selected</div>
+      </div>
+      <div class="flex">
+        <div class="self-center flex-1 text-center">
+            <button id="button" type="submit" class="bg-indigo-600 shadow-xl hover:bg-indigo-500 text-white font-bold rounded-full p-4 w-48">Submit</button>
+        </div> 
+      </div>
+    </form>
+  </body>
+</html>
